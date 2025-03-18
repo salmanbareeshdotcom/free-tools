@@ -50,10 +50,34 @@ function trimUrl(url) {
 
 // 🟡 Check Redirect Status
 async function checkRedirect(url) {
-    const response = await fetch(url, { redirect: "manual" });
-    return { statusCode: 200, body: JSON.stringify({
-        status: response.status,
-        redirected: response.status >= 300 && response.status < 400,
-        location: response.headers.get("location") || "No redirect"
-    }) };
+    let redirects = [];
+    let currentUrl = url;
+    let maxRedirects = 10; // Prevent infinite loops
+    let count = 0;
+
+    while (count < maxRedirects) {
+        const response = await fetch(currentUrl, { redirect: "manual" });
+
+        if (response.status >= 300 && response.status < 400) {
+            let nextLocation = response.headers.get("location");
+
+            if (!nextLocation) break; // No more redirects
+
+            redirects.push(nextLocation);
+            currentUrl = nextLocation;
+            count++;
+        } else {
+            break; // Reached final URL
+        }
+    }
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify({
+            originalUrl: url,
+            redirectCount: redirects.length,
+            redirectChain: redirects,
+            finalUrl: currentUrl
+        })
+    };
 }
