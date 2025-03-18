@@ -27,15 +27,26 @@ exports.handler = async (event) => {
 };
 
 // 🟢 Fetch Sitemap URLs
+
 async function fetchSitemap(url) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to fetch sitemap: ${response.status}`);
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch sitemap: ${response.status}`);
 
-    const xml = await response.text();
-    const dom = new JSDOM(xml, { contentType: "text/xml" });
-    const urls = [...dom.window.document.getElementsByTagName("loc")].map(node => node.textContent);
+        const xml = await response.text();
+        const dom = new JSDOM(xml, { contentType: "text/xml" });
+        const urls = [...dom.window.document.getElementsByTagName("loc")].map(node => node.textContent);
 
-    return { statusCode: 200, body: JSON.stringify({ urls }) };
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ body: { urls } }) // Modified structure
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        };
+    }
 }
 
 // 🔵 Trim URL to Root Domain
