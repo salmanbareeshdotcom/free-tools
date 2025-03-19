@@ -15,7 +15,7 @@ exports.handler = async (event) => {
             return await fetchSitemap(url);
         }
         if (path.includes("trim-url")) {
-            return trimUrl(url);
+            return trimUrls(urls);
         }
         if (path.includes("check-redirect")) {
             return await checkRedirect(url);
