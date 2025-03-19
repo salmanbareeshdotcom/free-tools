@@ -6,8 +6,8 @@ exports.handler = async (event) => {
     const { path, queryStringParameters } = event;
     let url = queryStringParameters.url;
 
-    if (!url || !validUrl.isUri(url)) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Invalid URL" }) };
+    if (!url) {
+        return { statusCode: 400, body: JSON.stringify({ error: "No URL provided" }) };
     }
 
     try {
@@ -15,8 +15,7 @@ exports.handler = async (event) => {
             return await fetchSitemap(url);
         }
         if (path.includes("trim-url")) {
-        const urls = url.includes(",") ? url.split(",") : [url]; // Split if multiple, else single
-            return trimUrls(urls);
+            return handleTrimUrls(url);
         }
         if (path.includes("check-redirect")) {
             return await checkRedirect(url);
@@ -28,7 +27,6 @@ exports.handler = async (event) => {
 };
 
 // 🟢 Fetch Sitemap URLs
-
 async function fetchSitemap(url) {
     try {
         const response = await fetch(url);
@@ -50,8 +48,24 @@ async function fetchSitemap(url) {
     }
 }
 
+// 🔵 Handle Trim URL Requests (Single & Bulk)
+function handleTrimUrls(urls) {
+    // Split into an array if multiple URLs are provided (comma-separated)
+    urls = urls.includes(",") ? urls.split(",") : [urls];
 
-// 🔵 Trim URL to Root Domain
+    // Trim and validate each URL
+    const validUrls = urls
+        .map(url => url.trim())
+        .filter(url => validUrl.isUri(url));
+
+    if (validUrls.length === 0) {
+        return { statusCode: 400, body: JSON.stringify({ error: "Invalid URL(s) provided" }) };
+    }
+
+    return trimUrls(validUrls);
+}
+
+// 🟡 Get Root Domain
 function getRootDomain(url) {
     try {
         const hostname = new URL(url).hostname;
@@ -66,11 +80,8 @@ function getRootDomain(url) {
     }
 }
 
+// 🔵 Trim URLs to Root Domain
 function trimUrls(urls) {
-    if (!Array.isArray(urls)) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Input must be an array of URLs" }) };
-    }
-
     const results = urls.map(url => {
         const rootDomain = getRootDomain(url);
         return rootDomain
