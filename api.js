@@ -35,11 +35,11 @@ async function fetchSitemap(url) {
 
         const xml = await response.text();
         const dom = new JSDOM(xml, { contentType: "text/xml" });
-        const urls = [...dom.window.document.getElementsByTagName("loc")].map(node => node.textContent);
+        const urls = [...dom.window.document.getElementsByTagName("loc")].map(node => ({ url: node.textContent }));
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ body: { urls } }) // Modified structure
+            body: JSON.stringify({ body: urls }) // Properly formatted JSON structure
         };
     } catch (error) {
         return {
@@ -48,6 +48,7 @@ async function fetchSitemap(url) {
         };
     }
 }
+
 
 // 🔵 Trim URL to Root Domain
 function trimUrl(url) {
