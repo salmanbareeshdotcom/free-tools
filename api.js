@@ -51,13 +51,34 @@ async function fetchSitemap(url) {
 
 
 // 🔵 Trim URL to Root Domain
-function trimUrl(url) {
+function getRootDomain(url) {
     try {
-        const trimmedUrl = new URL(url).origin;
-        return { statusCode: 200, body: JSON.stringify({ trimmedUrl }) };
+        const hostname = new URL(url).hostname;
+        const parts = hostname.split('.');
+
+        if (parts.length > 2) {
+            return parts.slice(-2).join('.'); // Keeps only the last two parts (root domain)
+        }
+        return hostname;
     } catch (error) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Invalid URL" }) };
+        return null;
     }
+}
+
+function trimUrls(urls) {
+    if (!Array.isArray(urls)) {
+        return { statusCode: 400, body: JSON.stringify({ error: "Input must be an array of URLs" }) };
+    }
+
+    const results = urls.map(url => {
+        const rootDomain = getRootDomain(url);
+        return rootDomain 
+            ? { original: url, trimmed: rootDomain } 
+            : { original: url, error: "Invalid URL" };
+    });
+
+    return { statusCode: 200, body: JSON.stringify(results) };
+}
 }
 
 // 🟡 Check Redirect Status
