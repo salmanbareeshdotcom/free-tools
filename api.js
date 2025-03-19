@@ -15,7 +15,8 @@ exports.handler = async (event) => {
             return await fetchSitemap(url);
         }
         if (path.includes("trim-url")) {
-            return trimUrls([url]);
+        const urls = url.includes(",") ? url.split(",") : [url]; // Split if multiple, else single
+            return trimUrls(urls);
         }
         if (path.includes("check-redirect")) {
             return await checkRedirect(url);
