@@ -72,13 +72,12 @@ function trimUrls(urls) {
 
     const results = urls.map(url => {
         const rootDomain = getRootDomain(url);
-        return rootDomain 
-            ? { original: url, trimmed: rootDomain } 
+        return rootDomain
+            ? { original: url, trimmed: rootDomain }
             : { original: url, error: "Invalid URL" };
     });
 
     return { statusCode: 200, body: JSON.stringify(results) };
-}
 }
 
 // 🟡 Check Redirect Status
