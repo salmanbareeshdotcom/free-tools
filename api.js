@@ -27,22 +27,38 @@ exports.handler = async (event) => {
 };
 
 // 🟢 Fetch Sitemap URLs
+import fetch from "node-fetch";
+import { JSDOM } from "jsdom";
+
 async function fetchSitemap(url) {
     try {
-        const response = await fetch(url, { timeout: 10000 }); // Set a timeout to prevent hanging requests
-        if (!response.ok) throw new Error(`Failed to fetch sitemap: ${response.status}`);
+        // Validate URL format
+        if (!/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url)) {
+            throw new Error("Invalid URL format.");
+        }
+
+        // Fetch sitemap with a 10-second timeout
+        const response = await fetch(url, { timeout: 10000 });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch sitemap (HTTP ${response.status}): ${response.statusText}`);
+        }
 
         const xml = await response.text();
 
-        // Efficient parsing using JSDOM
+        // Efficient XML parsing using JSDOM
         const dom = new JSDOM(xml, { contentType: "text/xml" });
 
-        // Convert NodeList to an array and extract URLs
+        // Extract URLs from <loc> tags
         const urls = Array.from(dom.window.document.querySelectorAll("loc")).map(node => node.textContent.trim());
+
+        if (urls.length === 0) {
+            throw new Error("No URLs found in the sitemap.");
+        }
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ urls }) // Cleaner JSON response
+            body: JSON.stringify({ urls })
         };
     } catch (error) {
         return {
@@ -51,6 +67,7 @@ async function fetchSitemap(url) {
         };
     }
 }
+
 
 // 🔵 Handle Trim URL Requests (Single & Bulk)
 function handleTrimUrls(urls) {
