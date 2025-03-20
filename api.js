@@ -29,16 +29,20 @@ exports.handler = async (event) => {
 // 🟢 Fetch Sitemap URLs
 async function fetchSitemap(url) {
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { timeout: 10000 }); // Set a timeout to prevent hanging requests
         if (!response.ok) throw new Error(`Failed to fetch sitemap: ${response.status}`);
 
         const xml = await response.text();
+
+        // Efficient parsing using JSDOM
         const dom = new JSDOM(xml, { contentType: "text/xml" });
-        const urls = [...dom.window.document.getElementsByTagName("loc")].map(node => ({ url: node.textContent }));
+
+        // Convert NodeList to an array and extract URLs
+        const urls = Array.from(dom.window.document.querySelectorAll("loc")).map(node => node.textContent.trim());
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ body: urls }) // Properly formatted JSON structure
+            body: JSON.stringify({ urls }) // Cleaner JSON response
         };
     } catch (error) {
         return {
