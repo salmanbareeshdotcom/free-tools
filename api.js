@@ -27,9 +27,6 @@ exports.handler = async (event) => {
 };
 
 // 🟢 Fetch Sitemap URLs
-import fetch from "node-fetch";
-import { JSDOM } from "jsdom";
-
 async function fetchSitemap(url) {
     try {
         // Validate URL format
